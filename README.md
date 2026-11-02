@@ -1,8 +1,12 @@
-# demo-clv-report
+# Reproducible CSV reporting — CLV demo
 
-A Python 3.12 CLI that turns a CSV of placed bets into an honest closing-line-value report:
-no-vig fair closing prices, per-bet CLV, ROI with a seeded bootstrap interval, and a Rule 1
-calibration check on the closing market.
+A reproducible Python 3.12 reporting pipeline that validates a CSV, calculates summary metrics,
+and exports text, JSON, and per-record results. The example domain is closing-line value
+in simulated sports-betting data.
+
+[![CI](https://github.com/shawnrruss/demo-clv-report/actions/workflows/ci.yml/badge.svg)](https://github.com/shawnrruss/demo-clv-report/actions/workflows/ci.yml)
+
+Original portfolio demonstration, simulated data only, not client work. AI-assisted implementation.
 
 ![report preview](docs/preview.png)
 
@@ -14,17 +18,22 @@ calibration check on the closing market.
 - **Seeded percentile bootstrap** 95% intervals for ROI, mean CLV and fair-close ROI (`--seed`,
   `--resamples`, default 10,000 resamples).
 - **Rule 1 calibration check**: the ROI the same bets would have returned at the fair closing
-  price, printed with its interval and PASS / FAIL / INCONCLUSIVE against a 1.5 point band.
+  price, printed with its interval and PASS / FAIL / INCONCLUSIVE under the project-defined 1.5-point criterion described below.
 - **Honest small-sample behaviour**: below 30 settled bets it prints `not enough data (N bets,
   need 30)` instead of intervals and verdicts.
 
 ## Quick start
 
+From the repository root with Python 3.12+, run this smaller example using only the standard library:
+
 ```bash
-python -m clvreport simulate --n 40000 --seed 1 --out sim.csv
+python -m clvreport simulate --n 500 --seed 1 --out sim.csv
 python -m clvreport report sim.csv --seed 0 --resamples 1000
 python -m clvreport report sim.csv --csv out.csv --json --seed 1 --resamples 2000
 ```
+
+This 500-record example is intended for a quick first run; an INCONCLUSIVE verdict is expected.
+The 40,000-record example below takes longer because each bootstrap resample processes the larger dataset.
 
 `simulate` writes a simulated bets CSV (`--edge 0.03` injects a true 3% edge, default `0` is a
 calibrated closing market). `report` reads a CSV with the columns `date, event, selection,
@@ -62,14 +71,19 @@ Rule 1 fair-close ROI +0.32 pt  PASS (limit +/-1.50 pt)  95% interval [-0.81 pt,
 - **Bootstrap** (`clvreport/bootstrap.py`): settled bets are resampled with replacement, using the
   same sampled rows for ROI, mean CLV and fair-close ROI. Each ROI divides total sampled profit by
   total sampled stake. Intervals use the 2.5th-97.5th percentiles; a fixed seed reproduces a run.
-- **Rule 1**: a calibrated closing market has expected fair-close ROI zero. PASS requires both a
+  Row resampling treats records as independent. Correlated bets or repeated events can make these
+  intervals misleading; this demo does not implement clustered or time-series resampling.
+- **Rule 1** is a project-defined diagnostic, not an industry standard or certification.
+  Under the model, a calibrated closing market has expected fair-close ROI zero. PASS requires both a
   realised ROI within +/-1.5 points and a 95% interval half-width at most 1.5 points. FAIL requires
   the entire interval strictly above +1.5 or below -1.5 points. All other cases are INCONCLUSIVE:
   more bets are needed because the interval is too wide or still overlaps the limit. The half-width
   is half the distance between the interval endpoints. JSON includes the same verdict, interval,
-  half-width and explanation; `rule1.pass` is `null` for INCONCLUSIVE.
+  half-width and explanation; `rule1.pass` is `null` for INCONCLUSIVE. PASS does not require the
+  entire interval to lie inside the +/-1.5-point band.
 - **30-bet floor**: with fewer than 30 settled bets the bootstrap intervals and the Rule 1 verdict
-  are not printed at all, because at that size they only measure noise.
+  are not printed. This is a chosen demonstration threshold, not a universal statistical-validity
+  cutoff; reaching 30 observations does not establish reliable inference.
 - **Void bets** are kept in the per-bet CSV but excluded from settled counts, staked, profit, ROI,
   mean CLV and Rule 1.
 - **Noise, stated plainly**: a few hundred calibrated bets can land outside +/-1.5 points by chance.
