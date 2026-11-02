@@ -1,2 +1,10 @@
 *.log
 __pycache__/
+*.py[cod]
+.venv/
+.ruff_cache/
+build/
+dist/
+*.egg-info/
+sim.csv
+out.csv
