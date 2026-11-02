@@ -10,8 +10,6 @@ from __future__ import annotations
 import math
 from collections.abc import Sequence
 
-METHOD = "proportional"
-
 
 def implied_prob(odds: float) -> float:
     """Implied probability of a decimal price, overround included."""
@@ -24,10 +22,7 @@ def fair_prob(closing_odds: float, other_odds: Sequence[float]) -> float:
     """No-vig closing probability of the back side of the market."""
     implied = [implied_prob(closing_odds)]
     implied.extend(implied_prob(odds) for odds in other_odds)
-    total = sum(implied)
-    if total <= 0.0:
-        raise ValueError("closing market has no implied probability")
-    return implied[0] / total
+    return implied[0] / sum(implied)
 
 
 def closing_line_value(taken_odds: float, fair_close_prob: float) -> float:

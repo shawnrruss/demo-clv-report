@@ -185,12 +185,10 @@ def _row(bet: Bet, columns: Sequence[str]) -> list[str]:
 
 
 def _write(bets: Sequence[Bet], path: str | Path, columns: Sequence[str]) -> None:
-    target = Path(path)
-    with target.open("w", newline="", encoding="utf-8") as handle:
+    with Path(path).open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle, lineterminator="\n")
         writer.writerow(columns)
-        for bet in bets:
-            writer.writerow(_row(bet, columns))
+        writer.writerows(_row(bet, columns) for bet in bets)
 
 
 def write_input_csv(bets: Sequence[Bet], path: str | Path) -> None:

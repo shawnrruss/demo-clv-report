@@ -125,16 +125,14 @@ def analyze(
     )
 
 
-def _pct(value: float) -> str:
+def _pct(value: float, suffix: str = "%") -> str:
     if abs(value) < 5e-5:
         value = 0.0
-    return f"{value * 100:+.2f}%"
+    return f"{value * 100:+.2f}{suffix}"
 
 
 def _points(value: float) -> str:
-    if abs(value) < 5e-5:
-        value = 0.0
-    return f"{value * 100:+.2f} pt"
+    return _pct(value, " pt")
 
 
 def format_text(analysis: Analysis, out_csv: str | None = None) -> str:

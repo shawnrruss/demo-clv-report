@@ -59,10 +59,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         analysis = analyze(bets, seed=args.seed, resamples=args.resamples)
         if args.out_csv:
             write_analysis_csv(bets, args.out_csv)
-        if args.json:
-            print(format_json(analysis, args.out_csv))
-        else:
-            print(format_text(analysis, args.out_csv))
+        formatter = format_json if args.json else format_text
+        print(formatter(analysis, args.out_csv))
         return 0
     except (OSError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
